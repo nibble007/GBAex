@@ -25,13 +25,6 @@ The CPU switches between the two sets at runtime via the `T` bit in CPSR — the
 | **CPSR (Current Program Status Register)** | Holds condition flags (N, Z, C, V), the current CPU mode, the IRQ/FIQ disable bits, and the T bit (ARM vs THUMB state). Every conditional instruction reads this. |
 | **SPSR (Saved PSR)** | One per privileged mode; holds a copy of CPSR saved automatically on exception entry, restored on return. |
 | **Instruction decoder** | Separate decode paths for ARM (32-bit) and THUMB (16-bit) encodings; maps opcode bits to an execution handler. |
-| **ALU** | Performs arithmetic/logic ops and sets condition flags; also handles the barrel shifter operand (see below) before the main op. |
-| **Barrel shifter** | Pre-processes the second operand of most data-processing instructions with a free shift/rotate (LSL/LSR/ASR/ROR) — no extra cycle cost, a distinctive ARM feature you must emulate correctly for cycle accuracy. |
 | **Pipeline (fetch/decode/execute)** | 3-stage pipeline; PC reads are offset (+8 in ARM state, +4 in THUMB) because of this — a classic emulator bug source if handled naively. |
 | **CPU modes** | User, IRQ, FIQ (unused on GBA), Supervisor, Abort, Undefined, System. Mode determines register banking and privilege. |
 | **Exception/interrupt handling** | On IRQ/SWI/etc., CPU auto-switches mode, banks LR/SPSR, jumps to a fixed vector. GBA uses this for the whole interrupt system (VBlank, timers, DMA, etc.) via a BIOS-level IRQ handler. |
-| **Coprocessor interface (CP15 etc.)** | Present in the ISA but effectively unused/stubbed on GBA — no MMU, no cache. Emulator can largely ignore this beyond not crashing on it. |
-
-### Why this matters for the OS ROM
-
-The OS scheduler leans directly on two of these: the **IRQ/exception mechanism** (VBlank interrupt = your tick source) and **banked registers on mode switch** (your context-switch save/restore is mode-bank-aware, not a from-scratch stack frame like on a desktop OS).
